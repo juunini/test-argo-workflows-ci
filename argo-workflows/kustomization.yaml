@@ -1,0 +1,7 @@
+kind: Kustomization
+namespace: argo
+resources:
+  - https://github.com/argoproj/argo-workflows/releases/download/v3.5.12/install.yaml
+  - admin-rbac.yaml
+
+# ARGO_TOKEN="Bearer $(kubectl get -n argo secret admin.service-account-token -o=jsonpath='{.data.token}' | base64 --decode)" && echo $ARGO_TOKEN

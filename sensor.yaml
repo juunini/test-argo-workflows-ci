@@ -1,0 +1,47 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Sensor
+metadata:
+  name: test-sensor
+  namespace: argo-events
+spec:
+  template:
+    serviceAccountName: operate-workflow-sa
+
+  dependencies:
+    - name: git-webhook
+      eventSourceName: webhook
+      eventName: webhook-event
+
+  triggers:
+    - template:
+        name: webhook-workflow-trigger
+        k8s:
+          operation: create
+          source:
+            resource:
+              apiVersion: argoproj.io/v1alpha1
+              kind: Workflow
+              metadata:
+                generateName: webhook-workflow-
+              spec:
+                entrypoint: builder
+                templates:
+                  - container:
+                      image: gcr.io/kaniko-project/executor:latest
+                      command:
+                        - executor
+                      args:
+                        - --destination=docker.io/juunini/test:latest
+                        - --context=/src
+
+                    name: builder
+                    workingDir: /src
+                    inputs:
+                      artifacts:
+                        - git:
+                            repo: https://github.com/juunini/test.git
+                            depth: 1
+                            singleBranch: true
+                            branch: master
+                          name: source
+                          path: /src
